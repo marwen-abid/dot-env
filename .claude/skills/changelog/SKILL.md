@@ -35,6 +35,17 @@ gh pr view --json number --jq '.number'
 
 The repo URL is derived from the git remote — typically `https://github.com/<owner>/<repo>/pull/<number>`.
 
+**Cloud sessions (`CLAUDE_CODE_REMOTE=true`):** `gh pr ...` fails (GraphQL is blocked). `gh repo view --json defaultBranchRef` in Step 1 works. Get `{owner}/{repo}` from `git remote get-url origin` and use REST:
+
+```bash
+# Latest PR number (add 1 for the upcoming PR)
+gh api 'repos/{owner}/{repo}/pulls?state=all&per_page=1' --jq '.[0].number'
+# PR for the current branch: number and URL
+gh api "repos/{owner}/{repo}/pulls?head={owner}:$(git branch --show-current)&state=all" --jq '.[0] | .number, .html_url'
+# Number and URL of a known PR
+gh api repos/{owner}/{repo}/pulls/{n} --jq '.number, .html_url'
+```
+
 ### Step 3: Pick the right section
 
 Match the changes to the appropriate section. Keep a Changelog defines six standard types — the SDP repo convention also uses a custom "Security and Dependencies" variant for dependency bumps. If the CHANGELOG already uses this section, keep it; otherwise use the standard Keep-a-Changelog sections:

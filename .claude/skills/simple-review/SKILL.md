@@ -27,6 +27,10 @@ Provide detailed feedback using inline-style comments for specific issues, poste
    - For GitHub PRs, prefer `gh pr diff <number-or-url>` and `gh pr view <number-or-url> --json title,headRefName,baseRefName,author,url`.
    - If useful, save the diff to `/tmp` for repeated reads.
    - Use `gh pr diff --name-only` or `git diff --name-only` to identify changed files.
+   - Cloud sessions (`CLAUDE_CODE_REMOTE=true`): `gh pr ...` fails (GraphQL is blocked). Use the built-in GitHub tools, or REST. Get `{owner}/{repo}` from `git remote get-url origin`.
+     - Metadata (title, body, base/head refs): `gh api repos/{owner}/{repo}/pulls/{n}`.
+     - Diff: `gh api repos/{owner}/{repo}/pulls/{n} -H "Accept: application/vnd.github.v3.diff"`.
+     - Changed files: `gh api repos/{owner}/{repo}/pulls/{n}/files --paginate --jq '.[].filename'`.
 4. Inspect relevant changed files and surrounding context with `read`; use `rg`/`git grep` to understand related code paths.
 5. Run focused validation when reasonable and not too expensive.
    - Prefer package-level tests/lints or targeted commands over full-suite runs.
