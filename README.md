@@ -40,7 +40,7 @@ Skills that carry internal identifiers (sprint and standup posting, Jira ticket 
 | simple-review | Concise review of a GitHub PR or local diff. |
 | spec-drift-analysis | Verify an OpenAPI spec against reference documents (such as SEPs) to detect drift. |
 
-Cloud caveats: `gh-stack` installs its extension at first use (unverified through the GitHub proxy). `openapi-writer` and `spec-drift-analysis` skip CLI validation when the `openapi` CLI is absent. `rex-review` shells out to `claude -p` and needs `jq` and `rg` (unverified in cloud).
+Cloud caveats: GitHub GraphQL is blocked in cloud sessions, so `gh pr ...` subcommands, `address-pr-comments` (GraphQL thread fetch), and `gh-stack` do not work there; `gh api` REST calls and the built-in GitHub tools do. `gh-stack` installs its extension at first use (unverified through the GitHub proxy). `openapi-writer` and `spec-drift-analysis` skip CLI validation when the `openapi` CLI is absent. `rex-review` shells out to `claude -p` and needs `jq` and `rg` (unverified in cloud).
 
 ## Use in a repository
 
@@ -48,7 +48,7 @@ Copy or symlink `CLAUDE.md` and `.claude/` into the target repository and commit
 
 ## Use in Claude Code cloud sessions (any repository)
 
-The cloud environment's setup script clones this repo and copies the config into the VM's `~/.claude`. The repo is public because environment variables are not available to setup scripts, so no token can be used there. The config then applies to every repository the session works on. Verified on the Anthropic-hosted image: user-level `CLAUDE.md`, skills, agents, hooks and the `agent` key all load; `effortLevel` is set by the launcher and ignored; `gh` is not pre-installed.
+The cloud environment's setup script clones this repo and copies the config into the VM's `~/.claude`. The repo is public because environment variables are not available to setup scripts, so no token can be used there. The config then applies to every repository the session works on. Verified on the Anthropic-hosted image: user-level `CLAUDE.md`, skills, agents, hooks and the `agent` key all load; `effortLevel` is set by the launcher and ignored; `gh` is not pre-installed (the install script adds it); GitHub GraphQL is blocked, REST works.
 
 In the claude.ai environment dialog, set the setup script to:
 
