@@ -23,6 +23,8 @@ python3 <skill>/scripts/fetch_threads.py OWNER/REPO N > threads.json        # un
 python3 <skill>/scripts/fetch_threads.py OWNER/REPO N --all > threads_all.json   # resolved too, for tone sampling in step 5
 ```
 
+Cloud sessions (`CLAUDE_CODE_REMOTE=true`): `gh pr ...` fails (GraphQL is blocked). Get the PR for the current branch with `gh api "repos/OWNER/REPO/pulls?head=OWNER:<branch>&state=all" --jq '.[0].number'`. `fetch_threads.py` switches to REST by itself.
+
 `pr.head` in that JSON is the truth. Anything the harness or `git status` shows about `origin/*` or the user's `HEAD` can be stale in either direction (another session may have rebased or pushed), so establish three facts yourself:
 
 ```bash
@@ -46,6 +48,8 @@ Shell hygiene inside a worktree-isolated session: the guard rejects compound com
 ## 2. Read the PR before the comments
 
 Read the PR description and the full diff (`gh pr diff N`), then each thread's file at `pr.head`. A comment only makes sense against the surrounding code and the PR's intent; reading comments first anchors you to the reviewer's framing. Check memory for earlier sessions on the same PR — decisions recorded there (a thread deliberately left as a reply, a deviation the author accepted) should not be re-litigated; if memory is silent, treat an unaddressed thread as open.
+
+Cloud sessions: get the description with `gh api repos/OWNER/REPO/pulls/N --jq .body` and the diff with `gh api repos/OWNER/REPO/pulls/N -H "Accept: application/vnd.github.v3.diff"`.
 
 Card numbers are positional: thread `n` is the n-th entry in `threads.json`. Use those numbers everywhere (commit subjects, report, cross-links) so they stay stable across sessions.
 
@@ -114,7 +118,7 @@ Then save a short project memory for this PR: per-thread verdicts, deviations, a
 
 ## Bundled scripts
 
-- `scripts/fetch_threads.py OWNER/REPO N [--all]` — review threads as JSON (unresolved by default) plus PR head/base/mergeability/author.
+- `scripts/fetch_threads.py OWNER/REPO N [--all]` — review threads as JSON (unresolved by default) plus PR head/base/mergeability/author. Uses GraphQL locally and REST in cloud sessions.
 - `scripts/make_manifest.py threads.json verdicts.json manifest.json` — merges thread facts with your verdicts; positional numbering; refuses to drop a thread.
 - `scripts/build_artifact.py manifest.json out.html` — the reconciliation page; reads diffs from git so the page always matches what cherry-pick stages.
 - `references/manifest.md` — verdict fields, statuses, `focus`/`files` attribution, shared commits.
