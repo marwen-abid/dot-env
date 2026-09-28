@@ -16,8 +16,10 @@ echo "dot-env: user=$(id -un) HOME=$HOME repo=$SDF_DIR"
 if ! command -v gh >/dev/null 2>&1; then
   echo "dot-env: installing gh"
   export DEBIAN_FRONTEND=noninteractive
-  apt-get update -qq
-  apt-get install -y -qq gh >/dev/null
+  # The image's apt lists already contain gh. `apt-get update` is only a fallback:
+  # third-party PPAs in the image are blocked by the Trusted network and would fail it.
+  apt-get install -y -qq gh >/dev/null \
+    || { apt-get update -qq 2>/dev/null || true; apt-get install -y -qq gh >/dev/null; }
 fi
 
 git config --global commit.gpgsign false
