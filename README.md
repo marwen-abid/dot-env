@@ -26,6 +26,7 @@ Skills that carry internal identifiers (sprint and standup posting, Jira ticket 
 |---|---|
 | address-pr-comments | Verify, fix, or reply to each unresolved PR review comment; publish reconciliation artifact. |
 | changelog | Add an entry to CHANGELOG.md for the current change. |
+| cloud-compat | Make a skill, agent, hook, or settings file work in Claude Code cloud sessions. |
 | code-review-and-quality | Multi-axis code review of any change before merge. |
 | code-simplification | Simplify code for clarity without changing behavior. |
 | doc-comment-cleanup | Rewrite doc comments for first-time readers; strip defensive and historical framing. |
