@@ -1,0 +1,196 @@
+<title>{{PAGE_NAME}}</title>  <!-- 2–4 word NAME specific to this change, e.g. "Ledger Loans"; never "PR N review" -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#F7F7F4; --ink:#1B1E23; --ink-2:#4A5059; --ink-3:#7A818C;
+  --rule:#DDDFD9; --panel:#FFFFFF; --panel-2:#EFF1EC;
+  --accent:#1F6F73; --accent-soft:#DDEDED;
+  --add-bg:#E6F2E6; --add-fg:#1E5A2A; --del-bg:#F7E4E2; --del-fg:#8A2C24; --hunk:#5B6470;
+  --req:#9A4B14; --req-bg:#F8E9DC; --opt:#3D5A99; --opt-bg:#E3E9F6; --nit:#6B7280; --nit-bg:#ECEEF1; --fyi:#1F6F73; --fyi-bg:#DDEDED;
+  --code-bg:#F1F2EE;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#15181C; --ink:#E6E7E3; --ink-2:#AEB4BC; --ink-3:#7E858F;
+    --rule:#2B3037; --panel:#1C2026; --panel-2:#222730;
+    --accent:#6FBFC1; --accent-soft:#1E3538;
+    --add-bg:#16301C; --add-fg:#9BD3A6; --del-bg:#3A1E1B; --del-fg:#E9A39B; --hunk:#8A93A0;
+    --req:#E3A06A; --req-bg:#3A2A1C; --opt:#9DB4EA; --opt-bg:#1F2A42; --nit:#A5ACB6; --nit-bg:#262B33; --fyi:#6FBFC1; --fyi-bg:#1E3538;
+    --code-bg:#1A1E24;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#15181C; --ink:#E6E7E3; --ink-2:#AEB4BC; --ink-3:#7E858F;
+  --rule:#2B3037; --panel:#1C2026; --panel-2:#222730;
+  --accent:#6FBFC1; --accent-soft:#1E3538;
+  --add-bg:#16301C; --add-fg:#9BD3A6; --del-bg:#3A1E1B; --del-fg:#E9A39B; --hunk:#8A93A0;
+  --req:#E3A06A; --req-bg:#3A2A1C; --opt:#9DB4EA; --opt-bg:#1F2A42; --nit:#A5ACB6; --nit-bg:#262B33; --fyi:#6FBFC1; --fyi-bg:#1E3538;
+  --code-bg:#1A1E24;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 "IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif}
+a{color:var(--accent)}
+.wrap{display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px;max-width:1240px;margin:0 auto;padding:40px 28px 96px}
+nav{position:sticky;top:24px;align-self:start;font-size:13px}
+nav .eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px}
+nav ol{list-style:none;margin:0;padding:0;border-left:1px solid var(--rule)}
+nav li a{display:block;padding:5px 0 5px 12px;color:var(--ink-2);text-decoration:none;border-left:2px solid transparent;margin-left:-1px}
+nav li a:hover,nav li a:focus-visible{color:var(--ink);border-left-color:var(--accent);outline:none}
+nav .sub{margin-top:18px;color:var(--ink-3);font-size:12px;line-height:1.5}
+main{min-width:0}
+header h1{font:600 38px/1.1 "Source Serif 4",Georgia,serif;margin:0 0 8px;text-wrap:balance;letter-spacing:-.01em}
+header .sub{color:var(--ink-2);max-width:68ch;margin:0 0 6px}
+header .meta{font:13px "IBM Plex Mono",ui-monospace,Menlo,monospace;color:var(--ink-3)}
+h2{font:600 26px/1.2 "Source Serif 4",Georgia,serif;margin:64px 0 6px;text-wrap:balance;letter-spacing:-.01em}
+h2 .n{color:var(--ink-3);font-weight:500;margin-right:8px}
+h3{font:600 15px/1.4 "IBM Plex Sans",sans-serif;margin:26px 0 8px;letter-spacing:.01em}
+p,li{max-width:70ch}
+p{margin:0 0 12px}
+ul{padding-left:20px;margin:0 0 12px}
+li{margin-bottom:4px}
+code{font:13px "IBM Plex Mono",ui-monospace,Menlo,monospace;background:var(--code-bg);padding:1px 5px;border-radius:3px}
+.files{font:12.5px "IBM Plex Mono",ui-monospace,Menlo,monospace;color:var(--ink-3);margin:2px 0 18px}
+.lbl{display:inline-block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:22px 0 6px}
+pre.diff{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:12px 0;margin:8px 0 18px;overflow-x:auto;font:12.5px/1.5 "IBM Plex Mono",ui-monospace,Menlo,monospace;tab-size:4;white-space:normal}
+pre.diff .f{display:block;padding:0 16px 8px;color:var(--ink-3);font-size:12px}
+pre.diff span.l{display:block;padding:0 16px;white-space:pre}
+pre.diff .add{background:var(--add-bg);color:var(--add-fg)}
+pre.diff .del{background:var(--del-bg);color:var(--del-fg)}
+pre.diff .hunk{color:var(--hunk);padding-top:6px}
+pre.diff .note{color:var(--ink-3);font-style:italic}
+.aside{border-left:3px solid var(--accent);background:var(--accent-soft);padding:12px 16px;border-radius:0 6px 6px 0;margin:14px 0 18px;max-width:78ch}
+.aside .t{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.aside p:last-child{margin-bottom:0}
+.take{border-left-color:var(--ink-3);background:var(--panel-2)}
+.take .t{color:var(--ink-2)}
+table{border-collapse:collapse;width:100%;max-width:860px;margin:10px 0 18px;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+td.num{font-variant-numeric:tabular-nums;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:13px;white-space:nowrap}
+.tbl{overflow-x:auto}
+.sev{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:3px;font-weight:600;white-space:nowrap}
+.sev.req{color:var(--req);background:var(--req-bg)}
+.sev.opt{color:var(--opt);background:var(--opt-bg)}
+.sev.nit{color:var(--nit);background:var(--nit-bg)}
+.sev.fyi{color:var(--fyi);background:var(--fyi-bg)}
+.verdict{border:1px solid var(--rule);background:var(--panel);border-radius:8px;padding:20px 22px;margin:20px 0;max-width:78ch}
+.verdict h3{margin-top:0}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 18px;font-size:14px;max-width:78ch}
+.kv dt{color:var(--ink-3)}
+.kv dd{margin:0}
+.ok{color:var(--add-fg)}
+.warn{color:var(--req)}
+@media (max-width:860px){.wrap{grid-template-columns:1fr;gap:20px}nav{position:static}nav ol{display:flex;flex-wrap:wrap;gap:2px 14px;border-left:0}nav li a{border-left:0;padding:2px 0}}
+@media (prefers-reduced-motion: no-preference){html{scroll-behavior:smooth}}
+</style>
+
+<!--
+  TEMPLATE for the explain-changeset skill. Replace every {{…}}. Delete these comments.
+  Rules that live in references/artifact-spec.md — the ones most often broken:
+    • Final state only. Present tense.
+    • Diff blocks: keep pre.diff{white-space:normal} + span.l{white-space:pre}; otherwise lines double-space.
+    • Every group = Why → Diff → "Context you can't see" aside → "My take" aside. Same order every time.
+    • HTML-escape < > & inside diff lines.
+    • With --no-verdict: delete <section id="review"> and its nav entry; keep Tests.
+-->
+<div class="wrap">
+<nav>
+  <div class="eyebrow">{{PR #N · area}}</div>
+  <ol>
+    <li><a href="#story">The story</a></li>
+    <li><a href="#g1">1 · {{short group title}}</a></li>
+    <li><a href="#g2">2 · {{short group title}}</a></li>
+    <!-- one <li> per group, 4–8 total -->
+    <li><a href="#tests">Tests</a></li>
+    <li><a href="#review">Review verdict</a></li>
+  </ol>
+  <div class="sub">Final state only. {{N}} commits collapsed into one diff against <code>{{base branch}}</code>.</div>
+</nav>
+
+<main>
+<header>
+  <h1>{{PAGE_NAME}}</h1>
+  <p class="sub">How {{this change}} {{does what}} — and whether it is ready to merge.</p>
+  <div class="meta">{{org/repo}} · {{head branch}} → {{base branch}} · {{files}} files · +{{adds}} / −{{dels}} · base {{short SHA}}</div>
+</header>
+
+<section id="story">
+<h2>The story</h2>
+<p><strong>The problem.</strong> {{What was broken/slow/missing, with the number that made it matter.}}</p>
+<p><strong>The fix, in one sentence.</strong> {{One sentence.}}</p>
+
+<!-- Optional: before/after table when the PR gives numbers. Delete if none. -->
+<div class="tbl"><table>
+<tr><th>{{metric}}</th><th>p50</th><th>p99</th><th>{{other}}</th></tr>
+<tr><td>before</td><td class="num">{{…}}</td><td class="num">{{…}}</td><td class="num">{{…}}</td></tr>
+<tr><td>after</td><td class="num">{{…}}</td><td class="num">{{…}}</td><td class="num">{{…}}</td></tr>
+</table></div>
+<p style="color:var(--ink-3);font-size:13px">{{Whose numbers, what box/conditions, what the author says is still unmet.}}</p>
+
+<div class="aside"><div class="t">The one idea to hold</div>
+<p>{{The single concept every group builds on, defined in two sentences.}}</p></div>
+</section>
+
+<!-- ============ GROUP (repeat) ============ -->
+<section id="g1">
+<h2><span class="n">1</span>{{Verb-phrase title: what the code now does}}</h2>
+<div class="files">{{path/a.go · path/b.go}}</div>
+<p><strong>Why.</strong> {{1–3 sentences: the problem this mechanism solves; the number if any.}}</p>
+<span class="lbl">Diff</span>
+<pre class="diff"><span class="f">{{path/to/file.go}}{{ — optional one-line gloss}}</span>
+<span class="l hunk">@@ {{plain-English location, e.g. "GetLedgerRaw → WithLedger"}} @@</span>
+<span class="l"> {{unchanged context line}}</span>
+<span class="l del">-{{removed line}}</span>
+<span class="l add">+{{added line}}</span>
+<span class="l note">	… {{n lines / what} unchanged …</span>
+<span class="l"> }</span></pre>
+
+<div class="aside"><div class="t">Context you can't see in the diff</div>
+<p>{{Verified facts the hunks can't show: what a library does with the bytes, what a lock guards, which invariant makes a removed check safe, what the deleted wrapper did, what else in flight touches these files. Written so the reader could re-verify.}}</p></div>
+<div class="aside take"><div class="t">My take</div>
+<p>{{Opinion with reason. Name the load-bearing line. Name the one risk and its fix. If a verdict finding originates here, say so and label it (e.g. "this group carries the PR's one <strong>Required</strong> item").}}</p></div>
+</section>
+
+<!-- ============ TESTS ============ -->
+<section id="tests">
+<h2>Tests</h2>
+<p>{{+N test lines across M files. What migrated, what was lost (or not).}}</p>
+<div class="tbl"><table>
+<tr><th>Test</th><th>What it proves</th><th>Assessment</th></tr>
+<tr><td><code>{{TestName}}</code></td><td>{{what it exercises}}</td><td class="ok">Strong — {{why}}</td></tr>
+<tr><td><code>{{TestName}}</code></td><td>{{what it claims}}</td><td class="warn">{{why it cannot fail / what it misses}}</td></tr>
+</table></div>
+<p>Hygiene: {{pool-identity / GC-timing / sleeps / skips / nolint / duplicated helpers / oversized files — facts only}}.</p>
+</section>
+
+<!-- ============ REVIEW (delete with --no-verdict) ============ -->
+<section id="review">
+<h2>Review verdict</h2>
+<div class="verdict">
+<h3>{{Approve | Approve, with the N Required fixes before merge | Request changes | Not yet — split it}}</h3>
+<p>{{One paragraph: why the production code is/isn't sound; where the real weaknesses are.}}</p>
+<dl class="kv">
+<dt>Build / vet</dt><dd><span class="ok">PASS</span> — {{cmds, toolchain}}</dd>
+<dt>Tests</dt><dd><span class="ok">PASS</span> — {{packages; race; flakiness probe; any timing anomaly}}</dd>
+<dt>Lint</dt><dd><span class="ok">0 new issues</span> — {{tool version; pre-existing count}}</dd>
+<dt>Changelog</dt><dd>{{entry present / absent and whether one is expected}}</dd>
+<dt>Dead code</dt><dd>{{deleted symbols with no remaining references, or the stragglers}}</dd>
+<dt>Prior review</dt><dd>{{N threads by whom; all answered; each fix verified present. Nothing below repeats them.}}</dd>
+</dl>
+</div>
+
+<h3>Findings</h3>
+<div class="tbl"><table>
+<tr><th>Sev</th><th>Where</th><th>Finding → fix</th></tr>
+<tr><td><span class="sev req">Required</span></td><td><code>{{file}}</code> {{function}}</td><td>{{finding}}. → {{concrete fix}}.</td></tr>
+<tr><td><span class="sev opt">Optional</span></td><td><code>{{file}}</code></td><td>{{finding}}. → {{fix}}.</td></tr>
+<tr><td><span class="sev nit">Nit</span></td><td><code>{{file}}</code></td><td>{{finding}}.</td></tr>
+<tr><td><span class="sev fyi">FYI</span></td><td><code>{{file}}</code></td><td>{{context; nothing to change}}.</td></tr>
+<!-- add <span class="sev req" style="color:#fff;background:#8A2C24">Critical</span> rows first when warranted -->
+</table></div>
+
+<h3>Is it worth including?</h3>
+<p>{{What it buys · what it costs in concepts (count deletions vs additions) · whether the risk is present-tense or drift · landing order vs other in-flight work.}}</p>
+</section>
+</main>
+</div>

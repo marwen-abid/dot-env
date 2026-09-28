@@ -1,0 +1,25 @@
+{
+  "title": "RexAdjudicatorOutput",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["verdicts"],
+  "properties": {
+    "verdicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "verdict", "evidence", "reason", "reproduced", "severity"],
+        "properties": {
+          "id": { "type": "string", "description": "The finding id, copied exactly." },
+          "verdict": { "type": "string", "enum": ["CONFIRMED", "LIKELY", "REJECTED"] },
+          "severity": { "type": "string", "enum": ["critical", "high", "medium", "low"], "description": "Final severity after verification." },
+          "evidence": { "type": "string", "description": "file:line references you read, with the exact code that proves or refutes the claim." },
+          "reason": { "type": "string", "description": "Why this verdict. For REJECTED, name the step of the trigger path that fails." },
+          "reproduced": { "type": "boolean", "description": "True only if you ran a test that failed because of the defect." },
+          "suggested_fix": { "type": "string" }
+        }
+      }
+    }
+  }
+}
