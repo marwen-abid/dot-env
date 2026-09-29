@@ -60,12 +60,23 @@ git clone -q https://github.com/marwen-abid/dot-env.git "$HOME/dot-env"
 bash "$HOME/dot-env/cloud/install.sh"
 ```
 
+For a repository with a toolchain profile, add the profile name. For stellar-rpc:
+
+```bash
+set -e
+git clone -q https://github.com/marwen-abid/dot-env.git "$HOME/dot-env"
+bash "$HOME/dot-env/cloud/install.sh" stellar-rpc
+```
+
+The `stellar-rpc` profile builds RocksDB from source. The first setup takes about 25 minutes; the environment snapshot keeps the result.
+
 Files:
 
-- `cloud/install.sh`: installs `gh`, disables commit signing, runs `sync.sh`.
+- `cloud/install.sh`: installs `gh`, disables commit signing, runs each profile given as an argument, runs `sync.sh`.
+- `cloud/profiles/stellar-rpc.sh`: the toolchain that stellar-rpc CI uses: Go at the `go.mod` version, golangci-lint at the CI pin, libzstd in `~/.zstd`, librocksdb in `~/.rocksdb` (from a `git clone`, because the network policy blocks GitHub archive downloads), and `make build-libs` when the checkout exists. Writes the cgo variables to `~/.config/dot-env/stellar-rpc.env`.
 - `cloud/sync.sh`: copies `CLAUDE.md`, `.claude/agents`, `.claude/skills` and `cloud/settings.json` into `~/.claude`. Skills are copied one by one so synced claude.ai skills stay.
 - `cloud/settings.json`: `.claude/settings.json` plus a SessionStart hook.
-- `cloud/hook-session-start.sh`: `git pull`, re-sync, `reloadSkills`. Keeps sessions on the latest commit even when the environment snapshot is a week old.
+- `cloud/hook-session-start.sh`: `git pull`, re-sync, sets the git commit identity, loads `~/.config/dot-env/*.env` through `CLAUDE_ENV_FILE`, `reloadSkills`. Keeps sessions on the latest commit even when the environment snapshot is a week old.
 
 `cloud/settings.json` is generated from `.claude/settings.json`; regenerate it after editing the source:
 

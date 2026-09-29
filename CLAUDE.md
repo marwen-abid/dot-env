@@ -9,3 +9,6 @@
 - Review threads over REST (CCR routes): `GET /repos/{o}/{r}/pulls/{n}/ccr/review_threads` returns `[{resolved, outdated, path, line, comment_ids}]`; comment bodies come from `GET /repos/{o}/{r}/pulls/{n}/comments`; `POST .../pulls/{n}/ccr/comments/{comment_id}/resolve` or `/unresolve`; `PUT|DELETE .../ccr/auto_merge`; `POST .../ccr/ready_for_review`, `.../ccr/convert_to_draft`.
 - `gh auth status` fails by design; `gh api` works on repositories attached to the session.
 - The session enforces a `Claude-Session:` commit trailer and an attribution footer on GitHub posts; do not fight it.
+- Paths: repositories are at `/home/user/<repo>`, the user is root, and there is no `~/.zshenv`. Do not use `/Users/marwen/...` paths or local shell files. The SessionStart hook loads the profile env files (`~/.config/dot-env/*.env`) into each Bash command.
+- Only the default branch is cloned. Get other branches with `git fetch origin <branch>`.
+- stellar-rpc: the `stellar-rpc` profile installs Go, golangci-lint, libzstd, librocksdb and sets the cgo variables. `make build-libs` output is in `<checkout>/target`; in a new git worktree, run `ln -s /home/user/stellar-rpc/target <worktree>/target`. Tests that need a non-root user skip themselves.
