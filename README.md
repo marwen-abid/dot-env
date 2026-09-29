@@ -29,6 +29,7 @@ Skills that carry internal identifiers (sprint and standup posting, Jira ticket 
 | cloud-compat | Make a skill, agent, hook, or settings file work in Claude Code cloud sessions. |
 | code-review-and-quality | Multi-axis code review of any change before merge. |
 | code-simplification | Simplify code for clarity without changing behavior. |
+| deslop | Diff-scoped AI-slop cleanup pass for Go code before review. |
 | doc-comment-cleanup | Rewrite doc comments for first-time readers; strip defensive and historical framing. |
 | explain-changeset | Build a shareable Artifact dossier that explains a PR or diff to reviewers. |
 | gh-stack | Manage stacked branches and dependent PRs with the gh-stack GitHub CLI extension. |

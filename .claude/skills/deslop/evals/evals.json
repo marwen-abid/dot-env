@@ -1,0 +1,60 @@
+{
+  "skill_name": "deslop",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Deslop the current branch before I send it for review. It's stacked on origin/feature/full-history; the next PR in the stack builds on it.",
+      "expected_output": "Trivial comment/indirection slop fixed in the 11 files of the bench-query/01 commit; forward-declared code, stringly-typed rows, Duration-as-unit, guard cascades and speculative extension points reported with file:line; build and tests pass; no behavior change.",
+      "expectations": [
+        "Edits touch only files changed between origin/feature/full-history and HEAD (the 11 files under cmd/stellar-rpc/internal/rpcv2/bench)",
+        "go build and go test of ./cmd/stellar-rpc/internal/rpcv2/bench pass after the edits",
+        "The //nolint:unused and //nolint:unparam items that cite bench-query/02-read-path are reported, and the code they mark is not deleted",
+        "The redundant overflow guards in runPacedLeg (warmup > math.MaxInt-measured, or intervalNS >= MaxInt64) are reported or removed with a stated proof",
+        "queryStageRow / queryDriverRow as renamed rateRow are removed or reported",
+        "Suffix-based row classification (keepsZeroSamples, driverLegCountSuffix, count[1:] in logRow) is reported as stringly-typed",
+        "Rates, counts or bytes carried in time.Duration fields are reported",
+        "runEnv.Extra with no production writer, or the one-member scratchPrefix const block, is reported as speculative",
+        "The maxLegRequests byte-arithmetic comment is shortened or reported",
+        "No error string, CSV row label, flag name or JSON field name is changed by the patch",
+        "The report opens with a 1-3 sentence summary and lists items left for the author with file:line"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "This worktree has the relay poller change from PR #936 checked out; its base is the parent commit, HEAD~1. Deslop it before review.",
+      "expected_output": "Diff-scoped cleanup of the perf-eval relay poller commit with no behavior change and a short report.",
+      "expectations": [
+        "Edits touch only files changed between HEAD~1 and HEAD",
+        "go build, go vet and go test of the touched perf-eval packages pass after the edits",
+        "No error string, log message, flag name, or exported identifier is changed by the patch",
+        "At least one comment-slop item (restating, narrating, or essay comment) is fixed or reported",
+        "Each non-trivial item left for the author is listed with file:line",
+        "The report opens with a 1-3 sentence summary that says whether anything changed"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Deslop my feature/window branch before I open the PR.",
+      "expected_output": "Planted slop in window.go/window_test.go fixed or reported; planted keep-worthy code untouched; limiter.go untouched; build/vet/test pass.",
+      "expectations": [
+        "go build, go vet and go test pass on the edited repo",
+        "limiter.go (outside the branch diff) is unchanged, including its duplicated 'Allow returns true' comment",
+        "The restating Window field comments ('limit is the limit', 'span is the span', 'hits holds the hits') are removed",
+        "exportFormatJSON (nolint:unused, 'next PR in this stack') is reported to the author and not deleted",
+        "The metricKey wrapper around metricName is removed or reported",
+        "The unreachable limit > math.MaxInt32 guard in NewWindow is removed or reported as unreachable",
+        "Counts stored in time.Duration (dropped, keys_count) are reported as a unit/type problem",
+        "The strings.HasSuffix(name, \"_count\") classification in FormatMetrics is reported",
+        "The Extra map field with no writer is reported or removed with justification",
+        "The maxHitsPerKey memory-arithmetic comment is shortened to the limit and its reason",
+        "The silent clamp limit = max(limit, 1) in Resize is reported and left unchanged",
+        "The comment 'Old hits are pruned lazily on each call; no background goroutine runs.' is kept",
+        "NewWindow's argument validation and all its error texts are unchanged",
+        "The //nolint:gosec comment with a stated bound in Status is kept",
+        "The tautological Remaining assertion in TestWindowStatus is fixed or reported",
+        "The inaccurate 'mu guards hits and dropped' comment (limit is also written under mu) is fixed or reported",
+        "The report opens with a 1-3 sentence summary that says whether anything changed"
+      ]
+    }
+  ]
+}
