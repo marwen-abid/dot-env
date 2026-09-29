@@ -26,6 +26,8 @@ LOG_DIR="$STATE_DIR/logs"
 
 log() { echo "dot-env[stellar-rpc]: $*"; }
 mkdir -p "$STATE_DIR" "$LOG_DIR"
+# Keep the whole run in a log: the session has no other view of setup output.
+exec > >(tee "$LOG_DIR/profile.log") 2>&1
 
 case "$(uname -m)" in
   x86_64) GOARCH=amd64 ;;
@@ -44,26 +46,41 @@ git clone -q --depth 1 --branch "$SRC_REF" https://github.com/stellar/stellar-rp
 # --- Go, in place --------------------------------------------------------------
 # Replace the image's GOROOT so every PATH finds the new Go. go.dev/dl may be
 # blocked; the toolchain module on proxy.golang.org is on the Trusted list.
-GO_WANT="$(awk '$1 == "go" { print $2; exit }' "$SRC/go.mod")"   # e.g. 1.26
-GO_CUR="$(cd / && GOTOOLCHAIN=local go env GOVERSION)"
-if [[ "$GO_CUR" == go"$GO_WANT" || "$GO_CUR" == go"$GO_WANT".* ]]; then
-  log "$GO_CUR already installed"
-else
-  GO_VER="$(curl -fsSL https://proxy.golang.org/golang.org/toolchain/@v/list \
-    | sed -n "s/^v0\.0\.1-go\(${GO_WANT//./\\.}\.[0-9]*\)\.linux-${GOARCH}\$/\1/p" \
+# The directory keeps its name (for example /usr/local/go1.24.7) and gets the new
+# contents. Each step below runs even when an earlier one fails.
+status=0
+install_go() {
+  local want cur ver root tc
+  want="$(awk '$1 == "go" { print $2; exit }' "$SRC/go.mod")"   # e.g. 1.26
+  cur="$(cd / && GOTOOLCHAIN=local go env GOVERSION)" || return 1
+  if [[ "$cur" == go"$want" || "$cur" == go"$want".* ]]; then
+    log "$cur already installed"
+    return 0
+  fi
+  ver="$(curl -fsSL https://proxy.golang.org/golang.org/toolchain/@v/list \
+    | sed -n "s/^v0\.0\.1-go\(${want//./\\.}\.[0-9]*\)\.linux-${GOARCH}\$/\1/p" \
     | sort -V | tail -1)"
-  [ -n "$GO_VER" ] || { echo "no go${GO_WANT}.x toolchain on proxy.golang.org" >&2; exit 1; }
-  GO_ROOT="$(cd / && GOTOOLCHAIN=local go env GOROOT)"
-  case "$GO_ROOT" in */go | */go-*) ;; *) echo "unexpected GOROOT $GO_ROOT; not replacing it" >&2; exit 1 ;; esac
-  log "replacing $GO_CUR with go$GO_VER in $GO_ROOT"
-  TC_ROOT="$(cd / && GOTOOLCHAIN="go$GO_VER" go env GOROOT)"
-  [ -x "$TC_ROOT/bin/go" ] || { echo "go$GO_VER download failed" >&2; exit 1; }
-  cp -a "$TC_ROOT" "$TMP/goroot"
-  chmod -R u+w "$TMP/goroot"
-  rm -rf "${GO_ROOT:?}"/*
-  cp -a "$TMP/goroot/." "$GO_ROOT/"
+  [ -n "$ver" ] || { log "no go${want}.x toolchain on proxy.golang.org"; return 1; }
+  root="$(cd / && GOTOOLCHAIN=local go env GOROOT)" || return 1
+  # Replace only a real GOROOT, never a system directory.
+  case "$root" in / | /usr | /usr/local | /opt | "$HOME") log "GOROOT is $root; not replacing it"; return 1 ;; esac
+  if [ ! -f "$root/VERSION" ] || [ ! -x "$root/bin/go" ] || [ ! -d "$root/src/runtime" ]; then
+    log "$root does not look like a GOROOT; not replacing it"
+    return 1
+  fi
+  log "replacing $cur with go$ver in $root"
+  tc="$(cd / && GOTOOLCHAIN="go$ver" go env GOROOT)" || return 1
+  [ -x "$tc/bin/go" ] || { log "go$ver download failed"; return 1; }
+  cp -a "$tc" "$TMP/goroot" && chmod -R u+w "$TMP/goroot" || return 1
+  rm -rf "${root:?}"/* && cp -a "$TMP/goroot/." "$root/" || return 1
+  log "installed $(cd / && GOTOOLCHAIN=local go env GOVERSION) in $root"
+}
+if install_go; then
+  export GOTOOLCHAIN=local
+else
+  status=1
+  log "Go step failed; go keeps switching to the go.mod toolchain by itself (GOTOOLCHAIN=auto)"
 fi
-export GOTOOLCHAIN=local
 
 # --- Native libs and golangci-lint ------------------------------------------------
 native() {
@@ -84,7 +101,7 @@ native() {
     # about 20 minutes, so this setup will not be cached.
     echo "native: no artifact at $url; building from source (about 20 minutes)"
     rm -rf "$TMP/native" && mkdir -p "$TMP/native"
-    GOTOOLCHAIN=local bash "$NATIVE" build "$SRC" "$TMP/native"
+    bash "$NATIVE" build "$SRC" "$TMP/native"
   fi
   rm -rf "$HOME/.zstd" "$HOME/.rocksdb"
   mv "$TMP/native/.zstd" "$TMP/native/.rocksdb" "$HOME/"
@@ -105,7 +122,6 @@ rust_libs() {
 log "native libs and Rust libs in parallel (logs in $LOG_DIR)"
 native > "$LOG_DIR/native.log" 2>&1 & native_pid=$!
 rust_libs > "$LOG_DIR/rust.log" 2>&1 & rust_pid=$!
-status=0
 wait "$native_pid" || { status=1; log "native step failed:"; tail -20 "$LOG_DIR/native.log"; }
 wait "$rust_pid" || { status=1; log "make build-libs failed:"; tail -20 "$LOG_DIR/rust.log"; }
 tail -1 "$LOG_DIR/native.log" | sed 's/^/dot-env[stellar-rpc]: /'
