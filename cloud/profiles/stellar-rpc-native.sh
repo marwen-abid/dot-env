@@ -15,7 +15,7 @@
 set -euo pipefail
 
 # Increase when the layout of the output changes.
-FORMAT=1
+FORMAT=2
 ARTIFACT_REPO=marwen-abid/dot-env
 ARTIFACT_BRANCH=artifacts
 
@@ -33,6 +33,21 @@ key() {
     | sha256sum | cut -c1-16
 }
 
+# git_source <script> <name> <version var>: prints <script> with its
+# `curl ... <name>.tar.gz` and `tar xzf ... <name>.tar.gz` lines replaced by a
+# git clone of github.com/facebook/<name> at tag v$<version var>, into the
+# directory the script's cmake step reads. Fails when the lines are not found.
+git_source() {
+  local script="$1" name="$2" var="$3" out
+  out="$(sed "/^curl .*${name}\.tar\.gz/,/^tar xzf .*${name}\.tar\.gz/c\\
+git clone -q --depth 1 --branch \"v\${${var}}\" https://github.com/facebook/${name} \"\$WORKDIR/${name}-\${${var}}\"" "$script")"
+  if grep -q "${name}\.tar\.gz" <<<"$out" || ! grep -q "^git clone .*facebook/${name}" <<<"$out"; then
+    echo "could not replace the tarball download in $script; update $0" >&2
+    return 1
+  fi
+  printf '%s\n' "$out"
+}
+
 build() {
   local src="$1" out="$2" k lint work
   k="$(key "$src")"
@@ -40,20 +55,15 @@ build() {
   mkdir -p "$out/bin"
   work="$(mktemp -d)"
 
-  echo "native: building libzstd"
-  PREFIX="$out/.zstd" bash "$src/scripts/install-zstd.sh"
+  # In cloud sessions, GitHub archive and release-asset downloads can be blocked
+  # for repositories not attached to the session; git clone works there and in CI.
+  # Replace each script's tarball download with a clone of the same tag.
+  git_source "$src/scripts/install-zstd.sh" zstd ZSTD_VERSION > "$work/install-zstd.sh"
+  git_source "$src/scripts/install-rocksdb.sh" rocksdb ROCKSDB_VERSION > "$work/install-rocksdb.sh"
 
-  # GitHub archive URLs can be blocked in cloud sessions; git clone works there
-  # and in CI. Replace the tarball download with a clone of the same tag.
-  # shellcheck disable=SC2016 # the variables expand inside the generated script
-  sed '/^curl .*rocksdb\.tar\.gz/,/^tar xzf .*rocksdb\.tar\.gz/c\
-git clone -q --depth 1 --branch "v${ROCKSDB_VERSION}" https://github.com/facebook/rocksdb "$WORKDIR/rocksdb-${ROCKSDB_VERSION}"' \
-    "$src/scripts/install-rocksdb.sh" > "$work/install-rocksdb.sh"
-  if grep -q 'rocksdb\.tar\.gz' "$work/install-rocksdb.sh" \
-    || ! grep -q '^git clone .*facebook/rocksdb' "$work/install-rocksdb.sh"; then
-    echo "could not replace the tarball download in install-rocksdb.sh; update $0" >&2
-    exit 1
-  fi
+  echo "native: building libzstd"
+  PREFIX="$out/.zstd" bash "$work/install-zstd.sh"
+
   echo "native: building librocksdb"
   # RocksDB builds with -Werror. GCC 12 gives a false -Wrestrict warning in
   # std::string (options/db_options.cc), which stops the build.
