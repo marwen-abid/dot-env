@@ -50,7 +50,7 @@ Copy or symlink `CLAUDE.md` and `.claude/` into the target repository and commit
 
 ## Use in Claude Code cloud sessions (any repository)
 
-The cloud environment's setup script clones this repo and copies the config into the VM's `~/.claude`. The repo is public because environment variables are not available to setup scripts, so no token can be used there. The config then applies to every repository the session works on. Verified on the Anthropic-hosted image: user-level `CLAUDE.md`, skills, agents, hooks and the `agent` key all load; `effortLevel` is set by the launcher and ignored; `gh` is not pre-installed (the install script adds it); GitHub GraphQL is blocked, REST works.
+The cloud environment's setup script clones this repo and copies the config into the VM's `~/.claude`. The repo is public because environment variables are not available to setup scripts, so no token can be used there. The config then applies to every repository the session works on. Verified on the Anthropic-hosted image: user-level `CLAUDE.md`, skills, agents, hooks and the `agent` key all load; `effortLevel` is set by the launcher and ignored; `gh` and `jq` are pre-installed (the install script adds them only if missing); GitHub GraphQL is blocked, REST works.
 
 In the claude.ai environment dialog, set the setup script to:
 
@@ -68,12 +68,26 @@ git clone -q https://github.com/marwen-abid/dot-env.git "$HOME/dot-env"
 bash "$HOME/dot-env/cloud/install.sh" stellar-rpc
 ```
 
-The `stellar-rpc` profile builds RocksDB from source. The first setup takes about 25 minutes; the environment snapshot keeps the result.
+Also set these in the environment's **Environment variables** field. The environment copies them into every command of the session:
+
+```text
+CGO_CFLAGS=-I/root/.zstd/include -I/root/.rocksdb/include
+CGO_LDFLAGS=-L/root/.zstd/lib -L/root/.rocksdb/lib
+LD_LIBRARY_PATH=/root/.zstd/lib:/root/.rocksdb/lib
+GOFLAGS=-tags=grocksdb_clean_link
+BASH_DEFAULT_TIMEOUT_MS=600000
+```
+
+`BASH_DEFAULT_TIMEOUT_MS` raises the Bash command timeout from 2 to 10 minutes (the maximum), so a cold `go test` or `cargo` build does not go to the background.
+
+A setup script must finish in about 5 minutes, or the environment is not cached. A RocksDB build takes about 20 minutes, so the `stellar-rpc-native` workflow builds libzstd, librocksdb and golangci-lint once and force-pushes the tarball to the orphan `artifacts` branch. Setup downloads it from `raw.githubusercontent.com`. The workflow runs daily and builds only when the stellar-rpc install scripts or the golangci-lint pin change. If no artifact matches, setup builds from source and the environment is not cached; run `gh workflow run stellar-rpc-native.yml` to publish one.
 
 Files:
 
-- `cloud/install.sh`: installs `gh`, disables commit signing, runs each profile given as an argument, runs `sync.sh`.
-- `cloud/profiles/stellar-rpc.sh`: the toolchain that stellar-rpc CI uses: Go at the `go.mod` version, golangci-lint at the CI pin, libzstd in `~/.zstd`, librocksdb in `~/.rocksdb` (from a `git clone`, because the network policy blocks GitHub archive downloads), and `make build-libs` when the checkout exists. Writes the cgo variables to `~/.config/dot-env/stellar-rpc.env`.
+- `cloud/install.sh`: installs `gh` and `jq` if missing, disables commit signing, sets the commit identity, runs each profile given as an argument, runs `sync.sh`. Always exits 0: a failed setup script stops the session from starting.
+- `cloud/profiles/stellar-rpc.sh`: the toolchain that stellar-rpc CI uses. Replaces the image's Go with the `go.mod` version (from `proxy.golang.org`), installs the native artifact (libzstd in `~/.zstd`, librocksdb in `~/.rocksdb`, golangci-lint at the CI pin), and runs `make build-libs` when the checkout exists. Writes the cgo variables to `~/.config/dot-env/stellar-rpc.env`. Logs are in `~/.config/dot-env/logs`.
+- `cloud/profiles/stellar-rpc-native.sh`: computes the artifact key and builds the artifact. Used by the workflow, and by setup when no artifact matches.
+- `.github/workflows/stellar-rpc-native.yml`: builds and publishes the artifact.
 - `cloud/sync.sh`: copies `CLAUDE.md`, `.claude/agents`, `.claude/skills` and `cloud/settings.json` into `~/.claude`. Skills are copied one by one so synced claude.ai skills stay.
 - `cloud/settings.json`: `.claude/settings.json` plus a SessionStart hook.
 - `cloud/hook-session-start.sh`: `git pull`, re-sync, sets the git commit identity, loads `~/.config/dot-env/*.env` through `CLAUDE_ENV_FILE`, `reloadSkills`. Keeps sessions on the latest commit even when the environment snapshot is a week old.

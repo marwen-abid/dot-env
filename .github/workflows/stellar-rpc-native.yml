@@ -1,0 +1,81 @@
+# Builds libzstd, librocksdb and golangci-lint for stellar-rpc cloud sessions and
+# force-pushes the tarball to the orphan "artifacts" branch. Cloud setup
+# (cloud/profiles/stellar-rpc.sh) downloads it from raw.githubusercontent.com,
+# because a RocksDB build does not fit in the 5-minute setup limit.
+#
+# The key is a hash of the stellar-rpc install scripts and the golangci-lint pin
+# (cloud/profiles/stellar-rpc-native.sh key). The daily run builds only when the
+# key changes.
+name: stellar-rpc native artifact
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * *"
+  push:
+    branches: [main]
+    paths:
+      - cloud/profiles/stellar-rpc-native.sh
+      - .github/workflows/stellar-rpc-native.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stellar-rpc-native
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # Same OS and arch as the cloud session VM.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone stellar-rpc
+        run: git clone -q --depth 1 --branch feature/full-history https://github.com/stellar/stellar-rpc "$RUNNER_TEMP/rpc"
+
+      - name: Compute key
+        id: key
+        run: |
+          key="$(bash cloud/profiles/stellar-rpc-native.sh key "$RUNNER_TEMP/rpc")"
+          echo "key=$key" >> "$GITHUB_OUTPUT"
+          file="stellar-rpc-native-$key.tar.gz"
+          echo "file=$file" >> "$GITHUB_OUTPUT"
+          if git fetch -q --depth 1 origin artifacts 2>/dev/null \
+            && git cat-file -e "FETCH_HEAD:$file" 2>/dev/null; then
+            echo "hit=true" >> "$GITHUB_OUTPUT"
+            echo "$file is already published"
+          fi
+
+      - uses: actions/setup-go@v6
+        if: steps.key.outputs.hit != 'true'
+        with:
+          go-version-file: ${{ runner.temp }}/rpc/go.mod
+          cache: false
+
+      - name: Build
+        if: steps.key.outputs.hit != 'true'
+        run: |
+          bash cloud/profiles/stellar-rpc-native.sh build "$RUNNER_TEMP/rpc" "$RUNNER_TEMP/out"
+          "$RUNNER_TEMP/out/bin/golangci-lint" version
+          tar czf "$RUNNER_TEMP/${{ steps.key.outputs.file }}" -C "$RUNNER_TEMP/out" .zstd .rocksdb bin
+          ls -l "$RUNNER_TEMP/${{ steps.key.outputs.file }}"
+
+      - name: Publish to the artifacts branch
+        if: steps.key.outputs.hit != 'true'
+        run: |
+          git switch -q --orphan artifacts
+          git rm -rfq --cached . 2>/dev/null || true
+          git clean -fdxq
+          cp "$RUNNER_TEMP/${{ steps.key.outputs.file }}" .
+          cat > README.md <<EOF
+          Prebuilt libzstd, librocksdb and golangci-lint for stellar-rpc cloud sessions.
+          Built by .github/workflows/stellar-rpc-native.yml on main; force-pushed, no history.
+          Source: stellar/stellar-rpc@$(git -C "$RUNNER_TEMP/rpc" rev-parse --short HEAD) (feature/full-history).
+          EOF
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -qm "stellar-rpc native ${{ steps.key.outputs.key }}"
+          git push -qf origin artifacts
