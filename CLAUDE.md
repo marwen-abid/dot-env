@@ -3,6 +3,27 @@
 - Remove all mannered prose.
 - For technical document, use ASD-STE100 Simplified Technical English.
 
+## CODE COMMENTS
+
+Comments are for the caller, not a description of the body. Before you write
+or keep a comment, ask: "Does this let a reader use or understand the code
+without reading the body, or does it repeat the body?" If it repeats the body,
+delete it.
+
+- Default to one sentence: the name plus its purpose. Example:
+  `// newBenchCommand creates a bench-ingest subcommand with shared flags,
+  // profiling, run metadata, and signal-driven cancellation.`
+- Add a sentence only for a fact the caller needs and cannot see from the
+  signature or name, such as an ownership, concurrency, or error-handling
+  rule. Leave out everything else.
+- Do not list flags, steps, branches, fields, or test assertions.
+- Delete a comment when the name, type, or struct tag already says it.
+- Inline comments explain why, never what. Keep one only for a decision a
+  reader would otherwise question.
+- Test comments state what is under test in one sentence.
+- When you revise comments, remove what fails the test above. Rewording at
+  the same length is not a revision.
+
 ## CLOUD SESSIONS (`CLAUDE_CODE_REMOTE=true`)
 
 - GitHub GraphQL is blocked (HTTP 403): `gh pr list|view|diff|create|review`, `gh api graphql`. Use the built-in `mcp__github__*` tools (`pull_request_read`, `pull_request_review_write`, `resolve_review_thread`, `update_pull_request`, `list_pull_requests`) or REST via `gh api repos/{owner}/{repo}/...`.
